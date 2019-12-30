@@ -2,9 +2,19 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import User, { IUser } from '../models/User';
+import {
+  signUpValidationSchema,
+  signInValidationSchema
+} from '../validation-schema/schemas';
 
 export const signUp = async (req: Request, res: Response) => {
   const { username, email, password } = req.body || {};
+  const { error } = await signUpValidationSchema.validate({
+    username,
+    email,
+    password
+  });
+  if (error) return res.status(400).json(error);
   const user: IUser = new User({
     username,
     email,
@@ -21,6 +31,8 @@ export const signUp = async (req: Request, res: Response) => {
 
 export const signIn = async (req: Request, res: Response) => {
   const { email, password } = req.body || {};
+  const { error } = await signInValidationSchema.validate({ email, password });
+  if (error) return res.status(400).json(error);
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json('Email or password is incorrect!');
   const correctPassword: boolean = await user.validatePassword(password);
